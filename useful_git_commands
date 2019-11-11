@@ -5,7 +5,7 @@ git push origin yourBranchName
 git add <filename>
 git commit -m "message about the commit"
 
-git checkout <branch>   //Swithc to a different branch
+git checkout <branch>   //Switch to a different branch
 git pull origin master  //when working on the master branch, get changes from GitHub back to your computer
 
 git branch -d <branchName> // Delete a branch locally
