@@ -29,11 +29,14 @@ reg		[22:0]  M_out; //Mantissa
 always @(S_in or E_in or P_in)
 begin
 	S_out = S_in;
-	M_out =P_in[46:24];
-	if (P_in[47]) 
+	if (P_in[47]) begin 
+		M_out =P_in[46:24];
 		E_out = E_in + 1;
-	else if (~P_in[47]) 
+	end
+	else if (~P_in[47]) begin 
+		M_out =P_in[45:23];
 		E_out = E_in;
+	end
 end
 
 always @(posedge clk)
