@@ -8,5 +8,5 @@ git commit -m "message about the commit"
 git checkout <branch>   //Swithc to a different branch
 git pull origin master  //when working on the master branch, get changes from GitHub back to your computer
 
-git -d <branchName> // Delete a branch locally
+git branch -d <branchName> // Delete a branch locally
 git push <remote_name> --delete <branch_name>
