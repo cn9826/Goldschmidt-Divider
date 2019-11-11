@@ -1,0 +1,6 @@
+git remote set-url origin https://cn9826@git.com/cn9826/Goldschmidt-Divider.git
+git push -u origin master
+git push origin yourBranchName
+
+git add <filename>
+git commit
