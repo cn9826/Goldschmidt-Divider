@@ -1,9 +1,0 @@
-time -v lib1 
-./testbench/ssp_test2.v
-./src/SSP.v 
-./src/TxFIFO.v
-./src/transmit_logic.v
-./src/receive_logic.v
-./src/RxFIFO.v
-./src/ram_dp_ar_aw.v
-./src/ram_dp_sw_ar.v
