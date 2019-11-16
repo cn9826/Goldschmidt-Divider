@@ -1,3 +1,5 @@
 time -v lib1 
 ./testbench/normalize_ff_tester.v
+./testbench/mul_input_FIFO_tester.v
 ./src/normalize_ff.v
+./src/mul_input_FIFO.v
