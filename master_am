@@ -1,0 +1,1 @@
+time -v lib1 array_multiplier_4.v  tb.v
