@@ -32,9 +32,9 @@ input	wire			rd_en;
 output	reg	[31:0]		stage0_a;
 output	reg	[31:0]		stage1_a;
 output	reg	[31:0]		stage2_a;
-output	reg	[31:0]		stage0_b; //10-bit, subject to change
-output	reg	[31:0]		stage1_b; //10-bit, subject to change
-output	reg	[31:0]		stage2_b; // 4-bit, subject to change
+output	reg	[31:0]		stage0_b; 
+output	reg	[31:0]		stage1_b; 
+output	reg	[31:0]		stage2_b; 
 //output	reg			INTR;     // Full Interrupt
 //---------------Internal Variables------------------//
 reg	[31:0]	a_buffer	[ 0:3]; //RAM Depth is 4, subject to change
@@ -91,30 +91,52 @@ begin: SEND_INPUT_TO_STG0
 		stage0_b <= b_buffer[rd_ptr];
 	end
 	else if (~clear_b) begin
-		stage0_a <= 24'bz; 	
-		stage0_b <= 10'bz;
+		stage0_a <= 32'bz; 	
+		stage0_b <= 32'bz;
 	end
 end
 always @(posedge clk)
 begin: SEND_INPUT_TO_STG1
 	if (clear_b && rd_en) begin
-		stage1_a <= a_buffer[rd_ptr-1];
-		stage1_b <= b_buffer[rd_ptr-1];
+		if (rd_ptr >= 1) begin		
+			stage1_a <= a_buffer[rd_ptr-1];
+			stage1_b <= b_buffer[rd_ptr-1];
+		end
+		else if (rd_ptr <1) begin
+			stage1_a <= a_buffer[3];
+			stage1_b <= b_buffer[3];
+		end
 	end
 	else if (~clear_b) begin
-		stage1_a <= 24'bz; 	
-		stage1_b <= 10'bz;
+		stage1_a <= 32'bz; 	
+		stage1_b <= 32'bz;
 	end
 end
 always @(posedge clk)
 begin: SEND_INPUT_TO_STG2
 	if (clear_b && rd_en) begin
-		stage2_a <= a_buffer[rd_ptr-2];
-		stage2_b <= b_buffer[rd_ptr-2];
+		if (rd_ptr >= 2) begin
+			stage2_a <= a_buffer[rd_ptr-2];
+			stage2_b <= b_buffer[rd_ptr-2];
+		end
+		else begin
+			case (rd_ptr)
+				2'b1: 
+				begin
+					stage2_a <= a_buffer[3];
+					stage2_b <= b_buffer[3];
+				end	
+				2'b0:
+				begin 
+					stage2_a <= a_buffer[2];
+					stage2_b <= b_buffer[2];
+				end
+			endcase
+		end
 	end
 	else if (~clear_b) begin
-		stage2_a <= 24'bz; 	
-		stage2_b <= 10'bz;
+		stage2_a <= 32'bz; 	
+		stage2_b <= 32'bz;
 	end
 end
 endmodule

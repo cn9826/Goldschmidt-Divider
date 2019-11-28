@@ -18,7 +18,7 @@ module stimulus;
 
   initial
   begin
-        #40
+        #21
         a_in = 24'hABCCD1;
         b_in = 24'h2314A5;
 

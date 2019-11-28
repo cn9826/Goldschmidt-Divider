@@ -1,53 +1,33 @@
-/*
-module Cell(output Cnext, Sthis, input xn, am, Slast, Cthis);
-
-  wire t;
-  and (t, xn, am);
-
-  xor (Sthis, t, Slast, Cthis);
-  xor (t1, Slast, Cthis);
-  and (t2, t, t1);
-  and (t3, Cthis, Slast);
-  or (Cnext, t2, t3);
+module ArrayMultiplier(clk, product_reg, a0, x0, a1, x1);
   
-endmodule
+parameter m = 24;
+parameter n = 24;
+output reg [m+n-1:0] product_reg;
+wire [m+n-1:0] product;
+input [m-1:0] a0;
+input [n-1:0] x0;
+input [m-1:0] a1;
+input [n-1:0] x1;
+input clk;
 
-module FACell(output Cnext, Sthis, input xn, am, Cthis);
-  
-  wire t1, t2, t3;
-  xor (t1, am, xn);
-  and (t2, t1, Cthis);
-  and (t3, am, xn);
-  or (Cnext, t2, t3);
-  xor (Sthis, t1, Cthis);
-
-endmodule
-*/
-module ArrayMultiplier(clk, product_reg, a, x);
-  
-  parameter m = 24;
-  parameter n = 24;
-  output reg [m+n-1:0] product_reg;
-  wire [m+n-1:0] product;
-  input [m-1:0] a;
-  input [n-1:0] x;
-  input clk;
-  
+/************************************************************************/
+/* 1st stage of combinational logic in the pipeline */
+/************************************************************************/  
   wire [m*n:0] c_partial_1 ;
   wire [m*n:0] s_partial_1 ;
 
-  // first line of the multiplier
+  // first row of the multiplier;
   genvar i;
   generate
     for(i=0; i<m; i=i+1)
     begin
       Cell c_first(.Cnext(c_partial_1[i]), .Sthis(s_partial_1[i]),
-                   .xn(x[0]), .am(a[i]), .Slast(1'b0), .Cthis(1'b0));
+                   .xn(x0[0]), .am(a0[i]), .Slast(1'b0), .Cthis(1'b0));
     end
   endgenerate
   
   
-  // middle lines of the multiplier - except last column_1
+  // middle rows of the multiplier - except last column_1
   genvar j1, k1;
   generate
     for(k1=0; k1<(n-1)/2; k1=k1+1)
@@ -55,38 +35,46 @@ module ArrayMultiplier(clk, product_reg, a, x);
       for(j1=0; j1<m-1; j1=j1+1)
       begin
         Cell c_middle(c_partial_1[m*(k1+1)+j1], s_partial_1[m*(k1+1)+j1],
-                      x[k1+1], a[j1], s_partial_1[m*(k1+1)+j1-m+1], c_partial_1[m*(k1+1)+j1-m]);
+                      x0[k1+1], a0[j1], s_partial_1[m*(k1+1)+j1-m+1], c_partial_1[m*(k1+1)+j1-m]);
       end
     end
   endgenerate
   
-  // middle lines of the multiplier - only last column_1
+  // middle rows of the multiplier - only last column_1
   genvar z1;
   generate
     for(z1=0; z1<(n-1)/2; z1=z1+1)
     begin
       Cell c_middle_last_col(c_partial_1[m*(z1+1)+(m-1)], s_partial_1[m*(z1+1)+(m-1)],
-                             x[z1+1], a[+(m-1)], 1'b0, c_partial_1[m*(z1+1)+(m-1)-m]);
+                             x0[z1+1], a0[+(m-1)], 1'b0, c_partial_1[m*(z1+1)+(m-1)-m]);
     end
   endgenerate
+/************************************************************************/  
+  
+
+/************************************************************************/  
+/* Latching 1st stage results into pipeline registers */
+/************************************************************************/  
 
   reg [m*n:0] c_partial_reg_1 ;
   reg [m*n:0] s_partial_reg_1 ;
-  reg [m-1:0] a_reg;
-  reg [n-1:0] x_reg; 
+ // reg [m-1:0] a_reg;
+ // reg [n-1:0] x_reg; 
 
+/* Latching results from the 1st row 1st stage in the pipeline register */
   always @ (posedge clk)
   begin
   c_partial_reg_1[m*n : 0] = c_partial_1[m*n : 0];
   s_partial_reg_1[m*n : 0] = s_partial_1[m*n : 0];
-  a_reg[m-1:0] = a[m-1:0];
-  x_reg[n-1:0] = x[n-1:0];
+ // a_reg[m-1:0] <= a[m-1:0];
+ // x_reg[n-1:0] <= x[n-1:0];
   end
 
   wire [m*n:0] c_partial_2 ;
   wire [m*n:0] s_partial_2 ;
 
-
+/* Passing the results from the 1st row 1st stage from the pipeline register
+ * the to 1st row 2nd stage wires */
   genvar i0;
   generate
     for(i0=0; i0<m; i0=i0+1)
@@ -96,7 +84,8 @@ module ArrayMultiplier(clk, product_reg, a, x);
     end
   endgenerate
   
- 
+/* Passing the results from middle rows 1st stage from the pipeline register
+ * the to middle rows 2nd stage wires -- except for the last column*/ 
   genvar j10, k10;
   generate
     for(k10=0; k10<(n-1)/2; k10=k10+1)
@@ -108,7 +97,9 @@ module ArrayMultiplier(clk, product_reg, a, x);
       end
     end
   endgenerate
-  
+
+/* Passing the results from middle rows 1st stage from the pipeline register
+ * the to middle rows 2nd stage wires -- only the last column*/   
   genvar z10;
   generate
     for(z10=0; z10<(n-1)/2; z10=z10+1)
@@ -118,6 +109,9 @@ module ArrayMultiplier(clk, product_reg, a, x);
     end
   endgenerate
 
+/************************************************************************/
+/* 2nd stage of combinational logic in the pipeline */
+/************************************************************************/  
   // middle lines of the multiplier - except last column_2
   genvar j2, k2;
   generate
@@ -126,21 +120,26 @@ module ArrayMultiplier(clk, product_reg, a, x);
       for(j2=0; j2<(m-1); j2=j2+1)
       begin
         Cell c_middle(c_partial_2[m*(k2+1)+j2], s_partial_2[m*(k2+1)+j2],
-                      x_reg[k2+1], a_reg[j2], s_partial_2[m*(k2+1)+j2-m+1], c_partial_2[m*(k2+1)+j2-m]);
+                      x1[k2+1], a1[j2], s_partial_2[m*(k2+1)+j2-m+1], c_partial_2[m*(k2+1)+j2-m]);
       end
     end
   endgenerate
   
   // middle lines of the multiplier - only last column_2
-  genvar z2;
+  genvar z2;;
   generate
     for(z2=(n-1)/2; z2<(n-1); z2=z2+1)
     begin
       Cell c_middle_last_col(c_partial_2[m*(z2+1)+(m-1)], s_partial_2[m*(z2+1)+(m-1)],
-                             x_reg[z2+1], a_reg[+(m-1)], 1'b0, c_partial_2[m*(z2+1)+(m-1)-m]);
+                             x1[z2+1], a1[+(m-1)], 1'b0, c_partial_2[m*(z2+1)+(m-1)-m]);
     end
   endgenerate
+/************************************************************************/
 
+  
+/************************************************************************/  
+/* Latching 2nd stage results into pipeline registers */
+/************************************************************************/  
   reg [m*n:0] c_partial_reg_2 ;
   reg [m*n:0] s_partial_reg_2 ;
   always @ (posedge clk)
@@ -149,8 +148,13 @@ module ArrayMultiplier(clk, product_reg, a, x);
   c_partial_reg_2[m*n : 0] = c_partial_2[m*n : 0];
   s_partial_reg_2[m*n : 0] = s_partial_2[m*n : 0];
   end
+/************************************************************************/  
 
-  // last line of the multiplier_1
+
+/************************************************************************/  
+/* 3rd stage of the combinational logic (last row CRA) */
+/************************************************************************/  
+  // last row of the multiplier_1
   wire [m-1:0] c_last_partial_1 ;
   wire [m-2:0] s_last_partial_1 ;
   buf (c_last_partial_1[0], 0);
@@ -164,7 +168,7 @@ module ArrayMultiplier(clk, product_reg, a, x);
     end
   endgenerate
 
-  // last line of the multiplier_2
+  // last row of the multiplier_2
   reg [m-1:0] c_last_partial_1_reg ;
   reg [m-2:0] s_last_partial_1_reg ;
   reg [m*n:0] c_partial_reg_3 ;
@@ -179,6 +183,9 @@ module ArrayMultiplier(clk, product_reg, a, x);
   s_partial_reg_3[m*n : 0] = s_partial_reg_2[m*n : 0];
   end
 
+/************************************************************************/  
+/* 4th stage of the combinational logic (last row CRA) */
+/************************************************************************/  
 
   wire [m-1:0] c_last_partial_2 ;
   wire [m-2:0] s_last_partial_2 ;
