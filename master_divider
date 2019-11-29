@@ -1,5 +1,6 @@
 time -v lib1 
-./testbench/am_FIFO_tester.v
+./testbench/divider_tester.v
+./src/divider.v
 ./src/am_FIFO.v
 ./src/mul_input_FIFO.v
 ./src/array_multiplier_2.v  
